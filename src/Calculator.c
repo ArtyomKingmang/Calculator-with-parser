@@ -9,6 +9,8 @@ typedef enum {
     TOKEN_MINUS,
     TOKEN_MULTIPLY,
     TOKEN_DIVIDE,
+    TOKEN_OPEN_PAREN,
+    TOKEN_CLOSE_PAREN,
     TOKEN_END,
     TOKEN_INVALID
 } TokenType;
@@ -51,6 +53,14 @@ Token get_next_token() {
             pos++;
             return (Token){TOKEN_DIVIDE, 0};
         }
+        if (input[pos] == '(') {
+            pos++;
+            return (Token){TOKEN_OPEN_PAREN, 0};
+        }
+        if (input[pos] == ')') {
+            pos++;
+            return (Token){TOKEN_CLOSE_PAREN, 0};
+        }
         return (Token){TOKEN_INVALID, 0};
     }
     return (Token){TOKEN_END, 0};
@@ -60,10 +70,20 @@ double parse_expression();
 
 double parse_factor() {
     Token token = get_next_token();
+    
     if (token.type == TOKEN_NUMBER) {
         return token.value;
+    } else if (token.type == TOKEN_OPEN_PAREN) {
+        double result = parse_expression();
+        token = get_next_token();
+        if (token.type != TOKEN_CLOSE_PAREN) {
+            fprintf(stderr, "Error: Expected closing parenthesis\n");
+            exit(EXIT_FAILURE);
+        }
+        return result;
     }
-    fprintf(stderr, "Error: Expected a number\n");
+
+    fprintf(stderr, "Error: Expected a number or opening parenthesis\n");
     exit(EXIT_FAILURE);
 }
 
@@ -107,7 +127,7 @@ double parse_expression() {
 }
 
 int main() {
-    input = "3 + 5 * 2 - 4 / 2";
+    input = "3 + (5 * 2) - (4 / 2)";
     pos = 0;
 
     double result = parse_expression();
